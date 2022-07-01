@@ -28,7 +28,7 @@ app.post('/', (req, res) => {
     tokenExp: iat + 60 * 60 * 2
   }
   
-  console.log(`Secret: ${process.env.ZOOM_SDK_SECRET}, Key: ${process.env.ZOOM_SDK_KEY}, Payload: ${req.body}`);
+  console.log(`Secret: ${process.env.ZOOM_SDK_SECRET}, Key: ${process.env.ZOOM_SDK_KEY}, Payload: ${JSON.stringify(req.body)}`);
 
   const sHeader = JSON.stringify(oHeader)
   const sPayload = JSON.stringify(oPayload)
