@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Meeting</title>
+
+</head>
+
+<body>
+
+    <div id="loadingDiv" style="display:none;z-index: 99999999999 !important;">
+        <div class="spinner-border text-primary"></div>
+    </div>
+
+    <style>
+        .spinner-grow {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            vertical-align: text-bottom;
+            background-color: currentColor;
+            border-radius: 50%;
+            opacity: 0;
+            animation: spinner-grow .75s linear infinite;
+        }
+
+        @keyframes spinner-border {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .text-primary {
+            color: #007bff !important;
+        }
+
+        .spinner-border {
+            display: inline-block;
+            width: 5rem;
+            height: 5rem;
+            vertical-align: text-bottom;
+            border: 0.25rem solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border .75s linear infinite;
+            z-index: 9999999999999 !important
+        }
+
+        #loadingDiv {
+            width: 100vw !important;
+            margin: 0px !important;
+            padding: 0px !important;
+            height: 100vh !important;
+            justify-content: center;
+            align-items: center;
+            display: flex;
+        }
+
+        #zmmtg-root {
+            transform: unset !important;
+            height: 90vh !important;
+            width: 100vw !important;
+            display: none;
+        }
+    </style>
+    <div id="zmmtg-root"></div>
+    <div id="registration" class="modal" style="display: none">
+
+        <!-- Modal content -->
+        <div class="modal-content">
+            <div>
+                <label>First Name</label>
+                <input id="first_name" type="text" required placeholder="enter your first name (min: 4 characters)" />
+                <span id="first_nameMsg" style="color: red"></span>
+            </div>
+            <div>
+                <label>Last Name</label>
+                <input id="last_name" type="text" required placeholder="enter your last name (min: 4 characters)" />
+                <span id="last_nameMsg" style="color: red"></span>
+            </div>
+            <div>
+                <label>Email</label>
+                <input id="email" type="email" required placeholder="enter your email address" />
+                <span id="emailMsg" style="color: red"></span>
+            </div>
+            <span id="apiResponseMsg" style="color: red"></span>
+            <input type="submit" onclick="validateAndRegister()" />
+        </div>
+
+    </div>
+
+    <script>
+        let zoomConfig = {
+            meetingNumber: '86713670932',
+            leaveUrl: "https://www.google.com",
+            apiUrl: "http://localhost:4000",
+            role: 0,
+            userEmail: "",
+            userName: 'Testing',
+            sdkKey: 'oDVxCNxPCrYm25mJHmjwRYDd0gAQkkfP5A6Y',
+            password: ''
+        };
+
+
+        window.addEventListener('load', function (e) {
+            document.querySelector('#registration').style.display = 'block';
+
+            window.toolsZoom = {
+                detectOS: function () {
+                    var sUserAgent = navigator.userAgent;
+                    var isWin = (navigator.platform === 'Win32') || (navigator.platform ===
+                        'Windows');
+                    var isMac = (navigator.platform === 'Mac68K') || (navigator.platform ===
+                        'MacPPC') || (navigator.platform === 'Macintosh') || (navigator
+                        .platform === 'MacIntel');
+                    if (isMac) return 'Mac';
+                    var isUnix = (navigator.platform === 'X11') && !isWin && !isMac;
+                    if (isUnix) return 'Unix';
+                    var isLinux = (String(navigator.platform).indexOf('Linux') > -1);
+                    if (isLinux) return 'Linux';
+                    if (isWin) {
+                        var isWin2K = sUserAgent.indexOf('Windows NT 5.0') > -1 || sUserAgent
+                            .indexOf('Windows 2000') > -1;
+                        if (isWin2K) return 'Win2000';
+                        var isWinXP = sUserAgent.indexOf('Windows NT 5.1') > -1 || sUserAgent
+                            .indexOf('Windows XP') > -1;
+                        if (isWinXP) return 'WinXP';
+                        var isWin2003 = sUserAgent.indexOf('Windows NT 5.2') > -1 || sUserAgent
+                            .indexOf('Windows 2003') > -1;
+                        if (isWin2003) return 'Win2003';
+                        var isWinVista = sUserAgent.indexOf('Windows NT 6.0') > -1 || sUserAgent
+                            .indexOf('Windows Vista') > -1;
+                        if (isWinVista) return 'WinVista';
+                        var isWin7 = sUserAgent.indexOf('Windows NT 6.1') > -1 || sUserAgent
+                            .indexOf('Windows 7') > -1;
+                        if (isWin7) return 'Win7';
+                        var isWin10 = sUserAgent.indexOf('Windows NT 10') > -1 || sUserAgent
+                            .indexOf('Windows 10') > -1;
+                        if (isWin10) return 'Win10';
+                    }
+                    return 'other';
+                },
+                detectIE: function () {
+                    var ua = window.navigator.userAgent;
+                    var msie = ua.indexOf('MSIE ');
+                    if (msie > 0) {
+                        return 'IE' + parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
+                    }
+                    var trident = ua.indexOf('Trident/');
+                    if (trident > 0) {
+                        var rv = ua.indexOf('rv:');
+                        return 'IE' + parseInt(ua.substring(rv + 3, ua.indexOf('.', rv)), 10);
+                    }
+                    var edge = ua.indexOf('Edge/');
+                    if (edge > 0) {
+                        return 'Edge' + parseInt(ua.substring(edge + 5, ua.indexOf('.', edge)), 10);
+                    }
+                    return false;
+                },
+                getBrowserInfo: function () {
+                    var agent = navigator.userAgent.toLowerCase();
+                    var regStr_ff = /firefox\/[\d.]+/gi;
+                    var regStr_chrome = /chrome\/[\d.]+/gi;
+                    var regStrChrome2 = /ipad; cpu os (\d+_\d+)/gi;
+                    var regStr_saf = /safari\/[\d.]+/gi;
+                    var regStr_edg = /edg\/[\d.]+/gi;
+                    if (agent.indexOf('firefox') > 0) {
+                        return agent.match(regStr_ff);
+                    }
+                    // Safari
+                    if (agent.indexOf('safari') > 0 && agent.indexOf('chrome') < 0) {
+                        var tmpInfo;
+                        if (agent.indexOf('ipad') > 0) {
+                            tmpInfo = agent.match(regStrChrome2).toString().replace('ipad; cpu os ',
+                                'ipados/');
+                        } else {
+                            tmpInfo = agent.match(regStr_saf);
+                            tmpInfo = tmpInfo.toString().replace('version', 'safari');
+                        }
+                        return tmpInfo;
+                    }
+                    // IE / Eege
+                    var tmpIsIE = toolsZoom.detectIE();
+                    if (tmpIsIE) {
+                        return tmpIsIE;
+                    }
+                    // Chrome
+                    if (agent.indexOf('chrome') > 0) {
+                        return agent.match(regStr_chrome);
+                    }
+                    return 'other';
+                },
+                getRandomInt: function (max) {
+                    return Math.floor(Math.random() * Math.floor(max));
+                },
+                extractHostname: function (url) {
+                    var hostname;
+                    if (url.indexOf('//') > -1) {
+                        hostname = url.split('/')[2];
+                    } else {
+                        hostname = url.split('/')[0];
+                    }
+                    hostname = hostname.split(':')[0];
+                    hostname = hostname.split('?')[0];
+                    return hostname;
+                },
+                getDomainName: function (hostName) {
+                    return hostName.substring(
+                        hostName.lastIndexOf('.', hostName.lastIndexOf('.') - 1) + 1
+                    );
+                },
+                setCookie: function (cname, cvalue) {
+                    var exdays = 1;
+                    var d = new Date();
+                    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+                    var expires = 'expires=' + d.toUTCString();
+                    document.cookie = cname +
+                        '=' +
+                        cvalue +
+                        ';' +
+                        expires +
+                        ';path=/';
+                },
+                getCookie: function (cname) {
+                    var name = cname + '=';
+                    var decodedCookie = decodeURIComponent(document.cookie);
+                    var ca = decodedCookie.split(';');
+                    for (var i = 0; i < ca.length; i += 1) {
+                        var c = ca[i];
+                        while (c.charAt(0) === ' ') {
+                            c = c.substring(1);
+                        }
+                        if (c.indexOf(name) === 0) {
+                            return c.substring(name.length, c.length);
+                        }
+                    }
+                    return '';
+                },
+                deleteAllCookies: function () {
+                    var cookies = document.cookie.split(";");
+                    for (var i = 0; i < cookies.length; i++) {
+                        var cookie = cookies[i];
+                        var eqPos = cookie.indexOf("=");
+                        var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+                        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+                    }
+                }
+            };
+
+        });
+
+        document.querySelector('#first_name').addEventListener('input', function (e) {
+            if (e.target.value.length > 3) {
+                document.querySelector('#first_nameMsg').style.display = 'none';
+            }
+        })
+
+        document.querySelector('#last_name').addEventListener('input', function (e) {
+            if (e.target.value.length > 3) {
+                document.querySelector('#last_nameMsg').style.display = 'none';
+            }
+        })
+
+        document.querySelector('#email').addEventListener('input', function (e) {
+            if (isValidEmail(e.target.value)) {
+                document.querySelector('#emailMsg').style.display = 'none';
+            }
+        })
+
+        async function validateAndRegister() {
+            document.body.style.pointerEvents = 'none';
+
+            let loader = document.querySelector('#loadingDiv');
+            loader.style.display = 'flex'
+
+            document.querySelector('#apiResponseMsg').style.display = 'none'
+
+            let isValid = true;
+
+            let first_name = document.querySelector('#first_name');
+            let last_name = document.querySelector('#last_name');
+            let email = document.querySelector('#email');
+
+            if (!first_name.value || first_name.value.length < 4) {
+                let first_nameMsg = document.querySelector('#first_nameMsg');
+
+                first_nameMsg.textContent = 'Please enter a valid first name!';
+                first_nameMsg.style.display = 'block';
+
+                isValid = false;
+            } else {
+                document.querySelector('#first_nameMsg').style.display = 'none'
+            }
+
+            if (!last_name.value || last_name.value.length < 4) {
+                let last_nameMsg = document.querySelector('#last_nameMsg');
+
+                last_nameMsg.textContent = 'Please enter a valid last name!';
+                last_nameMsg.style.display = 'block';
+
+                isValid = false;
+            } else {
+                document.querySelector('#last_nameMsg').style.display = 'none'
+            }
+
+            if (!email.value || email.value.length < 1) {
+                let emailMsg = document.querySelector('#emailMsg');
+
+                emailMsg.textContent = 'Please enter a valid email!';
+                emailMsg.style.display = 'block';
+
+                isValid = false;
+            } else {
+                document.querySelector('#emailMsg').style.display = 'none'
+            }
+
+
+            if (!isValidEmail(document.querySelector('#email').value)) {
+                let emailMsg = document.querySelector('#emailMsg');
+
+                emailMsg.textContent = 'Please enter a valid email!';
+                emailMsg.style.display = 'block';
+
+                isValid = false;
+            } else {
+                document.querySelector('#emailMsg').style.display = 'none'
+            }
+
+            if (isValid) {
+
+                document.querySelector('#first_nameMsg').style.display = 'none';
+                document.querySelector('#last_nameMsg').style.display = 'none';
+                document.querySelector('#emailMsg').style.display = 'none';
+
+                await fetch(zoomConfig.apiUrl + '/registration', {
+                        method: "POST",
+                        body: JSON.stringify({
+                            "meetingNumber": zoomConfig.meetingNumber,
+                            "first_name": first_name.value,
+                            'last_name': last_name.value,
+                            "email": email.value,
+                        }),
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    }).then(res => res.json())
+                    .then(res => {
+                        if (res.join_url) {
+                            document.querySelector('#zmmtg-root').style.display = 'block';
+
+                            JoinMeeting(zoomConfig.meetingNumber, zoomConfig.password, new URL(res.join_url)
+                                .searchParams
+                                .get('tk'));
+
+                            document.querySelector('#apiResponseMsg').style.display = 'none'
+                            document.querySelector('#registration').style.display = 'none';
+                        } else {
+                            document.querySelector('#zmmtg-root').style.display = 'none';
+                            document.querySelector('#apiResponseMsg').style.display = 'block'
+                            document.querySelector('#apiResponseMsg').textContent =
+                                'Something went wrong please contact to the support!';
+                        }
+                    }).catch(err => {
+                        document.querySelector('#loadingDiv').style.display = 'block'
+                        console.log('error=> ', err)
+                    })
+            }
+
+            loader.style.display = 'none';
+            document.body.style.pointerEvents = 'all'
+        }
+
+        function isValidEmail(email) {
+            return /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))$/i
+                .test(email);
+        }
+
+        function JoinMeeting(meetingNumber, pwd, tk) {
+
+            console.log('checkSystemRequirements');
+            console.log(JSON.stringify(ZoomMtg.checkSystemRequirements()));
+            ZoomMtg.setZoomJSLib('https://source.zoom.us/2.5.0/lib', '/av');
+            ZoomMtg.preLoadWasm();
+            ZoomMtg.prepareJssdk();
+            var zoomLang = "en-US";
+            toolsZoom.setCookie("meeting_lang", zoomLang);
+            ZoomMtg.i18n.load('en-US');
+            ZoomMtg.i18n.reload('en-US');
+            ZoomMtg.reRender({
+                lang: zoomLang
+            });
+            Join(meetingNumber, pwd, tk);
+        }
+
+        function Join(meetingNumber, pwd, tk) {
+
+            fetch(zoomConfig.apiUrl, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        "meetingNumber": zoomConfig.meetingNumber,
+                        "role": zoomConfig.role,
+                    }),
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                }).then(res => res.json())
+                .then(r => {
+                    ZoomMtg.init({
+                        leaveUrl: zoomConfig.leaveUrl,
+                        debug: true, //optional
+                        leaveUrl: 'http://www.zoom.us', //required
+                        showMeetingHeader: true, //option
+                        disableInvite: false, //optional
+                        disableCallOut: false, //optional
+                        disableRecord: false, //optional
+                        disableJoinAudio: false, //optional
+                        audioPanelAlwaysOpen: true, //optional
+                        showPureSharingContent: false, //optional
+                        isSupportAV: true, //optional,
+                        isSupportChat: true, //optional,
+                        isSupportQA: true, //optional,
+                        isSupportPolling: true, //optional
+                        isSupportBreakout: true, //optional
+                        isSupportCC: true, //optional,
+                        screenShare: true, //optional,
+                        rwcBackup: '', //optional,
+                        videoDrag: true, //optional,
+                        sharingMode: 'both', //optional,
+                        videoHeader: true, //optional,
+                        isLockBottom: true, // optional,
+                        isSupportNonverbal: true, // optional,
+                        isShowJoiningErrorDialog: true, // optional,
+                        disablePreview: false, // optional
+                        disableCORP: true, // optional
+                        inviteUrlFormat: '', // optional
+                        loginWindow: { // optional,
+                            width: 400,
+                            height: 380
+                        },
+                        success: function () {
+                            ZoomMtg.muteAll({
+                                muteAll: true
+                            });
+                            ZoomMtg.join({
+                                meetingNumber: zoomConfig.meetingNumber,
+                                userName: zoomConfig.userName,
+                                signature: r.signature,
+                                sdkKey: zoomConfig.sdkKey,
+                                userEmail: zoomConfig.userEmail,
+                                passWord: zoomConfig.password,
+                                tk: '',
+                                success: (success) => {
+
+                                    console.log(success)
+                                },
+                                error: (error) => {
+                                    console.log(error)
+                                }
+                            });
+                        },
+                        error: function (res) {
+                            console.log(res);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+        }
+    </script>
+
+    <!-- import #zmmtg-root css -->
+    <link type="text/css" rel="stylesheet" href="https://source.zoom.us/2.5.0/css/bootstrap.css" />
+    <link type="text/css" rel="stylesheet" href="https://source.zoom.us/2.5.0/css/react-select.css" />
+
+    <script src="https://source.zoom.us/2.5.0/lib/vendor/react.min.js"></script>
+    <script src="https://source.zoom.us/2.5.0/lib/vendor/react-dom.min.js"></script>
+    <script src="https://source.zoom.us/2.5.0/lib/vendor/redux.min.js"></script>
+    <script src="https://source.zoom.us/2.5.0/lib/vendor/redux-thunk.min.js"></script>
+    <script src="https://source.zoom.us/2.5.0/lib/vendor/lodash.min.js"></script>
+
+    <!-- For Client View -->
+    <script src="https://source.zoom.us/zoom-meeting-2.5.0.min.js"></script>
+
+    <!-- For Component View -->
+    <script src="https://source.zoom.us/2.5.0/zoom-meeting-embedded-2.5.0.min.js"></script>
+
+    <style>
+        input[type=text],
+        input[type=email],
+        select {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input[type=submit] {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        input[type=submit]:hover {
+            background-color: #45a049;
+        }
+
+        /* div {
+            border-radius: 5px;
+            background-color: #f2f2f2;
+            padding: 20px;
+        } */
+
+        #registration {
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .modal {
+            display: none;
+            /* Hidden by default */
+            position: fixed;
+            /* Stay in place */
+            z-index: 1;
+            /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 30vw;
+            /* Full width */
+            height: 30vh;
+            /* Full height */
+            overflow: auto;
+            /* Enable scroll if needed */
+            background-color: rgb(0, 0, 0);
+            /* Fallback color */
+            background-color: rgba(0, 0, 0, 0.4);
+            /* Black w/ opacity */
+        }
+
+        /* Modal Content/Box */
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 30%;
+            /* Could be more or less, depending on screen size */
+        }
+
+        /* The Close Button */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</body>
+
+</html>
