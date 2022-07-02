@@ -100,8 +100,8 @@ app.post('/registration', async (req, res) => {
   })
 });
 
-app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/demo.html');
-});
+// app.get('/', function (req, res) {
+//   res.sendFile(__dirname + '/demo.html');
+// });
 
 app.listen(port, () => console.log(`Zoom Meeting SDK Sample Signature Node.js on port ${port}!`))
